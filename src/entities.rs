@@ -1,6 +1,6 @@
 use coffee::graphics::{Frame, Mesh, Point, Rectangle, Sprite, Shape, Color};
 use crate::{assets::*,WINDOW_WIDTH,WINDOW_HEIGHT};
-use crate::utils::{self, check_collision, Collision};
+use crate::utils::*;
 pub enum Action {
     Idle,
     Left,
@@ -16,9 +16,9 @@ pub struct Player {
 }
 
 impl Player {
-    pub const PLAYER_GRAVITY: f32 = 3.0;
-    pub const SPEED: f32 = 500.0;
-    pub const JUMP: f32 = 10.0;
+    const PLAYER_GRAVITY: f32 = 3.0;
+    const SPEED: f32 = 500.0;
+    const JUMP: f32 = 10.0;
 
     pub fn new(position: Rectangle<f32>) -> Self {
         Player {
@@ -69,7 +69,7 @@ pub struct Platform{
 }
 
 impl Platform{
-    pub const GROUND_HEIGHT: f32 = 30.0;
+    const GROUND_HEIGHT: f32 = 30.0;
 
     pub fn new(position: Rectangle<f32>) -> Platform {
         Platform{ position }
@@ -107,9 +107,9 @@ pub struct Bubble {
 }
 
 impl Bubble{
-    pub const BUBBLE_STROKE_WIDTH: f32 = 2.0;
-    pub const ENERGY_LOSS:f32 = 0.9;
-    pub const BUBBLE_GRAVITY:f32 = 100.0;
+    const BUBBLE_STROKE_WIDTH: f32 = 2.0;
+    const ENERGY_LOSS:f32 = 0.9;
+    const BUBBLE_GRAVITY:f32 = 100.0;
 
     pub fn new(position: Rectangle<f32>, velocity: (f32,f32)) -> Bubble {
         let radius = position.width / 2.0;
@@ -162,5 +162,47 @@ impl Bubble{
         let center = Point::new(self.position.x + self.position.width / 2.0,self.position.y + self.position.height / 2.0);
         shape.stroke(Shape::Circle {center,radius:self.radius}, color,Self::BUBBLE_STROKE_WIDTH);
         shape.draw(&mut frame.as_target());
+    }
+}
+
+pub enum HarpoonState {
+    Active,
+    Stationary,
+    Inactive
+}
+
+pub struct Harpoon {
+    pub position: Rectangle<f32>,
+    pub horizontal_velocity: f32,
+    pub state: HarpoonState,
+}
+
+impl Harpoon {
+    pub const INITAL_HEIGHT: f32 = 300.0;
+
+    pub fn new(position: Rectangle<f32>, horizontal_velocity: f32, state: HarpoonState) -> Harpoon {
+        Harpoon { position, horizontal_velocity, state }
+    }
+
+    pub fn update(&mut self, seconds: f32) {
+        if let HarpoonState::Active = self.state {
+            self.position.y -= self.horizontal_velocity * seconds;
+            self.position.height += self.horizontal_velocity * seconds;
+        }
+    }
+
+    pub fn draw(&self, frame: &mut Frame, assets: &Assets,) {
+        match self.state {
+            HarpoonState::Active | HarpoonState::Stationary => {
+                let harpoon_sprite: Sprite = Sprite {
+                    source: Rectangle { x:0,y:0,width:assets.harpoon_sprite_sheet.width(),height: self.position.height as u16 },
+                    position: Point::new(self.position.x,self.position.y),
+                    scale: (1.0,1.0)
+                };
+
+                assets.harpoon_sprite_sheet.draw(harpoon_sprite, &mut frame.as_target());
+            }
+            _ => ()
+        }
     }
 }

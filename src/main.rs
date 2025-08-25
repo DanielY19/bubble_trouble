@@ -14,9 +14,9 @@ pub struct ParameterGenerator{
 }
 
 impl ParameterGenerator {
-    pub const PLATFORM_HEIGHT:f32 = 20.0;
-    pub const PLATFORM_WIDTH_LOWER_BOUND:f32 = 100.0;
-    pub const PLATFORM_WIDTH_HIGHER_BOUND:f32 = 200.0;
+    const PLATFORM_HEIGHT:f32 = 20.0;
+    const PLATFORM_WIDTH_LOWER_BOUND:f32 = 100.0;
+    const PLATFORM_WIDTH_HIGHER_BOUND:f32 = 200.0;
 
     pub fn new() -> ParameterGenerator {
         ParameterGenerator { generator: rng() }
@@ -58,6 +58,7 @@ fn main() -> Result<()> {
 struct GameState {
     assets: Assets,
     player: Player,
+    harpoon: Harpoon,
     platforms: Vec<Platform>,
     bubbles:Vec<Bubble>,
 
@@ -65,7 +66,7 @@ struct GameState {
 }
 
 impl GameState{
-    pub const SECONDS_FOR_FRAME: f32 = 1.0 / Self::TICKS_PER_SECOND as f32;
+    const SECONDS_FOR_FRAME: f32 = 1.0 / Self::TICKS_PER_SECOND as f32;
 
     pub fn load() -> Task<GameState>{
         Assets::load().map(|assets| {
@@ -90,9 +91,17 @@ impl GameState{
                 height:assets.player_sprite_slices.idle.height as f32,
             };
 
+            let harpoon_start_position = Rectangle {
+                x:player_start_position.x,
+                y:300.0,
+                width:assets.harpoon_sprite_sheet.width() as f32,
+                height: 0.0,
+            };
+
+            let harpoon = Harpoon::new(harpoon_start_position, 100.0, HarpoonState::Active);
 
             let player = Player::new(player_start_position);
-            GameState { assets, player, platforms,bubbles, parameter_generator }
+            GameState { assets, player, harpoon ,platforms,bubbles, parameter_generator }
         })
     }
 }
@@ -106,6 +115,8 @@ impl Game for GameState {
     }
 
     fn update(&mut self, _window: &Window) {
+        self.harpoon.update(Self::SECONDS_FOR_FRAME);
+
         for bubble in &mut self.bubbles{
             bubble.update(Self::SECONDS_FOR_FRAME);
 
@@ -122,8 +133,9 @@ impl Game for GameState {
 
     fn draw(&mut self, frame: &mut Frame, _timer: &Timer) {
         frame.clear(Assets::GREY);
-        self.player.draw(frame, &self.assets,self.assets.player_sprite_slices.left_step);
-        let mut shapes = vec![self.player.position];
+        self.player.draw(frame, &self.assets,self.assets.player_sprite_slices.idle);
+        self.harpoon.draw(frame, &self.assets);
+        let mut shapes = vec![self.player.position,self.harpoon.position];
         
         for platform in &self.platforms {
             platform.draw(frame);

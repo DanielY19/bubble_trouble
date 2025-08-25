@@ -1,9 +1,11 @@
-use coffee::load::{Task};
+use coffee::load::{Join, Task};
 use coffee::graphics::{Image, Color, Rectangle};
 use std::path::{PathBuf};
 
 pub struct Assets {
     pub player_sprite_sheet: Image,
+    pub harpoon_sprite_sheet: Image,
+
     pub player_sprite_slices: PlayerSpriteSlices,
 }
 
@@ -16,10 +18,16 @@ impl Assets {
     pub fn load() -> Task<Assets> {
         let path = PathBuf::from("resources/hero.png");
         let player_spirte_sheet_task = Image::load(path);
+         
+        let path = PathBuf::from("resources/harpoon.png");
+        let harpoon_sprite_task = Image::load(path);
 
-        player_spirte_sheet_task.map(|image| Assets { 
-            player_sprite_slices: PlayerSpriteSlices::new(image.width(),image.height()),
-            player_sprite_sheet: image,
+        let image_loading_task = (player_spirte_sheet_task,harpoon_sprite_task).join();
+
+        image_loading_task.map(|sprites| Assets { 
+            player_sprite_slices: PlayerSpriteSlices::new(sprites.0.width(),sprites.0.height()),
+            player_sprite_sheet: sprites.0,
+            harpoon_sprite_sheet: sprites.1
         })
     }
 }
@@ -33,8 +41,8 @@ pub struct PlayerSpriteSlices {
 }
 
 impl PlayerSpriteSlices {
-    pub const PLAYER_SPRITE_SHEET_ROWS:u16 = 4;
-    pub const PLAYER_SPRITE_SHEET_COLS:u16 = 3;
+    const PLAYER_SPRITE_SHEET_ROWS:u16 = 4;
+    const PLAYER_SPRITE_SHEET_COLS:u16 = 3;
 
     pub fn new(width: u16, height: u16) -> Self {
         let frame_width = width / Self::PLAYER_SPRITE_SHEET_ROWS;
