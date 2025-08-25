@@ -1,10 +1,11 @@
-use bubble_trouble::drawing_utils::PlayerSpriteSlices;
 use bubble_trouble::entities::Player;
 use coffee::graphics::{Color, Frame, Rectangle, Window, WindowSettings, Sprite, Point};
 use coffee::load::Task;
 use coffee::{Game, Result, Timer};
 
-use bubble_trouble::{entities,assets,drawing_utils,WINDOW_HEIGHT,WINDOW_WIDTH};
+use bubble_trouble::{WINDOW_HEIGHT,WINDOW_WIDTH};
+use bubble_trouble::assets::*;
+use bubble_trouble::entities::*;
 
 fn main() -> Result<()> {
     GameState::run(WindowSettings {
@@ -17,26 +18,22 @@ fn main() -> Result<()> {
 }
 
 struct GameState {
-    assets: assets::Assets,
+    assets: Assets,
     player: Player,
-    player_draw_utils: PlayerSpriteSlices
 }
 
 impl GameState{
     pub fn load() -> Task<GameState>{
-        assets::Assets::load().map(|assets| {
-            let dimensions = assets.player_sprite_dimensions;
-            let player_draw_utils = PlayerSpriteSlices::new(dimensions);
-
+        Assets::load().map(|assets| {
             let position = Rectangle{
-                x:600.0,
-                y:600.0,
-                width:dimensions.0 as f32,
-                height:dimensions.1 as f32,
+                x:500.0,
+                y:300.0,
+                width:assets.player_sprite_slices.Idle.width as f32,
+                height:assets.player_sprite_slices.Idle.height as f32,
             };
 
             let player = Player::new(position);
-            GameState { assets, player, player_draw_utils }
+            GameState { assets, player }
         })
     }
 }
@@ -51,6 +48,6 @@ impl Game for GameState {
 
     fn draw(&mut self, frame: &mut Frame, _timer: &Timer) {
         frame.clear(Color::new(0.5,0.5,0.5,0.0));
-        self.player.draw(frame, &self.assets,&self.player_draw_utils);
+        self.player.draw(frame, &self.assets,self.assets.player_sprite_slices.Right);
     }
 }

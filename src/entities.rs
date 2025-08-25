@@ -1,6 +1,5 @@
 use coffee::graphics::{Frame, Rectangle, Sprite, Point};
 use crate::assets::*;
-use crate::drawing_utils::*;
 
 use crate::WINDOW_HEIGHT;
 
@@ -56,11 +55,11 @@ impl Player {
         self.position.y = f32::clamp(self.position.y, 0.0, WINDOW_HEIGHT)
     }
 
-    pub fn draw(&mut self, frame: &mut Frame, assets: &Assets, player_drawing_utils: &PlayerSpriteSlices) {
+    pub fn draw(&mut self, frame: &mut Frame, assets: &Assets, motion: Rectangle<u16>) {
         let player_sprite: Sprite = Sprite {
-            source: player_drawing_utils.Idle,
+            source: motion,
             position: Point::new(self.position.x,self.position.y),
-            scale: player_drawing_utils.scale
+            scale: assets.player_sprite_slices.scale
         };
 
         assets.player_sprite_sheet.draw(player_sprite, &mut frame.as_target());
