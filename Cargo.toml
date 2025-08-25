@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 coffee = { version = "0.4", features = ["opengl"] }
+rand = "0.9.2"

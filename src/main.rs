@@ -20,6 +20,7 @@ fn main() -> Result<()> {
 struct GameState {
     assets: Assets,
     player: Player,
+    platforms: Vec<Platform>
 }
 
 impl GameState{
@@ -28,12 +29,20 @@ impl GameState{
             let position = Rectangle{
                 x:500.0,
                 y:300.0,
-                width:assets.player_sprite_slices.Idle.width as f32,
-                height:assets.player_sprite_slices.Idle.height as f32,
+                width:assets.player_sprite_slices.idle.width as f32,
+                height:assets.player_sprite_slices.idle.height as f32,
             };
 
+            let mut platform_generator = PlatformGenerator::new();
+
+            let mut platforms = Vec::new();
+
+            for i in 0..3 {
+                platforms.push(Platform::new(platform_generator.generate_platform()));
+            }
+
             let player = Player::new(position);
-            GameState { assets, player }
+            GameState { assets, player, platforms }
         })
     }
 }
@@ -48,6 +57,10 @@ impl Game for GameState {
 
     fn draw(&mut self, frame: &mut Frame, _timer: &Timer) {
         frame.clear(Color::new(0.5,0.5,0.5,0.0));
-        self.player.draw(frame, &self.assets,self.assets.player_sprite_slices.Right);
+        self.player.draw(frame, &self.assets,self.assets.player_sprite_slices.idle);
+        
+        for platform in &mut self.platforms {
+            platform.draw(frame);
+        }
     }
 }

@@ -1,10 +1,13 @@
 use coffee::load::{Task};
-use coffee::graphics::{Image, Rectangle};
-use std::path::{self, PathBuf};
+use coffee::graphics::{Image, Mesh, Rectangle};
+use rand::{rng, Rng};
+use rand::rngs::ThreadRng;
+use std::path::{PathBuf};
+use crate::{WINDOW_HEIGHT,WINDOW_WIDTH};
 
 pub struct Assets {
     pub player_sprite_sheet: Image,
-    pub player_sprite_slices: PlayerSpriteSlices
+    pub player_sprite_slices: PlayerSpriteSlices,
 }
 
 impl Assets {
@@ -14,16 +17,36 @@ impl Assets {
 
         player_spirte_sheet_task.map(|image| Assets { 
             player_sprite_slices: PlayerSpriteSlices::new(image.width(),image.height()),
-            player_sprite_sheet: image
+            player_sprite_sheet: image,
         })
     }
 }
+
+pub struct PlatformGenerator{
+    generator: ThreadRng
+}
+
+impl PlatformGenerator {
+    pub fn new() -> PlatformGenerator {
+        PlatformGenerator { generator: rng() }
+    }
+
+    pub fn generate_platform(&mut self) -> Rectangle<f32> {
+        let x = self.generator.random_range(0.0 ..= WINDOW_WIDTH);
+        let y = self.generator.random_range(0.0 ..= WINDOW_HEIGHT);
+        let width:f32 = self.generator.random_range(100.0 .. 200.0);
+        let height:f32 = 20.0;
+
+        Rectangle { x,y,width,height }
+    }
+}
+
 pub struct PlayerSpriteSlices {
-    pub Idle: Rectangle<u16>,
-    pub Left: Rectangle<u16>,
-    pub Right: Rectangle<u16>,
-    pub LeftStep: Rectangle<u16>,
-    pub RightStep: Rectangle<u16>,
+    pub idle: Rectangle<u16>,
+    pub left: Rectangle<u16>,
+    pub right: Rectangle<u16>,
+    pub left_step: Rectangle<u16>,
+    pub right_step: Rectangle<u16>,
     pub scale: (f32, f32),
 }
 
@@ -33,31 +56,31 @@ impl PlayerSpriteSlices {
         let frame_height = height / 3;
 
         Self {
-            Idle: Rectangle {
+            idle: Rectangle {
                 x: 0 * frame_width,
                 y: 2 * frame_height,
                 width: frame_width,
                 height: frame_height,
             },
-            Left: Rectangle {
+            left: Rectangle {
                 x: 0 * frame_width,
                 y: 1 * frame_height,
                 width: frame_width,
                 height: frame_height,
             },
-            LeftStep: Rectangle {
+            left_step: Rectangle {
                 x: 1 * frame_width,
                 y: 1 * frame_height,
                 width: frame_width,
                 height: frame_height,
             },
-            Right: Rectangle {
+            right: Rectangle {
                 x: 1 * frame_width,
                 y: 0 * frame_height,
                 width: frame_width,
                 height: frame_height,
             },
-            RightStep: Rectangle {
+            right_step: Rectangle {
                 x: 0 * frame_width,
                 y: 0 * frame_height,
                 width: frame_width,

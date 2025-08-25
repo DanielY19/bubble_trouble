@@ -1,6 +1,7 @@
-use coffee::graphics::{Frame, Rectangle, Sprite, Point};
-use crate::assets::*;
-
+use coffee::graphics::{Color, Frame, Mesh, Point, Rectangle, Sprite, Shape};
+use rand::rngs::ThreadRng;
+use rand::Rng;
+use crate::{assets::*, WINDOW_WIDTH};
 use crate::WINDOW_HEIGHT;
 
 pub enum Action {
@@ -12,7 +13,7 @@ pub enum Action {
     Shoot,
 }
 pub struct Player {
-    position: Rectangle<f32>,
+    pub position: Rectangle<f32>,
     velocity: f32,
     on_ground: bool,
 }
@@ -63,5 +64,21 @@ impl Player {
         };
 
         assets.player_sprite_sheet.draw(player_sprite, &mut frame.as_target());
+    }
+}
+
+pub struct Platform{
+    pub position: Rectangle<f32>
+}
+
+impl Platform{
+    pub fn new(position: Rectangle<f32>) -> Platform {
+        Platform{ position }
+    }
+
+    pub fn draw(&mut self, frame: &mut Frame) {
+        let shape = &mut Mesh::new();
+        shape.fill(Shape::Rectangle(self.position), Color::new(1.0,1.0,1.0,1.0));
+        shape.draw(&mut frame.as_target());
     }
 }
