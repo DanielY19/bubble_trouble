@@ -92,13 +92,13 @@ impl GameState{
             };
 
             let harpoon_start_position = Rectangle {
-                x:player_start_position.x,
-                y:300.0,
+                x:player_start_position.center().x - assets.harpoon_sprite_sheet.width() as f32 / 2.0,
+                y:ground_y_pos,
                 width:assets.harpoon_sprite_sheet.width() as f32,
                 height: 0.0,
             };
 
-            let harpoon = Harpoon::new(harpoon_start_position, 100.0, HarpoonState::Active);
+            let harpoon = Harpoon::new(harpoon_start_position, HarpoonState::Active);
 
             let player = Player::new(player_start_position);
             GameState { assets, player, harpoon ,platforms,bubbles, parameter_generator }

@@ -159,7 +159,7 @@ impl Bubble{
 
     pub fn draw(&self, frame: &mut Frame, color: Color) {
         let mut shape = Mesh::new();
-        let center = Point::new(self.position.x + self.position.width / 2.0,self.position.y + self.position.height / 2.0);
+        let center = Point::new(self.position.center().x,self.position.center().y);
         shape.stroke(Shape::Circle {center,radius:self.radius}, color,Self::BUBBLE_STROKE_WIDTH);
         shape.draw(&mut frame.as_target());
     }
@@ -173,21 +173,20 @@ pub enum HarpoonState {
 
 pub struct Harpoon {
     pub position: Rectangle<f32>,
-    pub horizontal_velocity: f32,
     pub state: HarpoonState,
 }
 
 impl Harpoon {
-    pub const INITAL_HEIGHT: f32 = 300.0;
+    pub const HARPOON_VELOCITY: f32 = 100.0;
 
-    pub fn new(position: Rectangle<f32>, horizontal_velocity: f32, state: HarpoonState) -> Harpoon {
-        Harpoon { position, horizontal_velocity, state }
+    pub fn new(position: Rectangle<f32>, state: HarpoonState) -> Harpoon {
+        Harpoon { position, state }
     }
 
     pub fn update(&mut self, seconds: f32) {
         if let HarpoonState::Active = self.state {
-            self.position.y -= self.horizontal_velocity * seconds;
-            self.position.height += self.horizontal_velocity * seconds;
+            self.position.y -= Self::HARPOON_VELOCITY * seconds;
+            self.position.height += Self::HARPOON_VELOCITY * seconds;
         }
     }
 
