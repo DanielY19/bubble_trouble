@@ -1,9 +1,6 @@
 use coffee::load::{Task};
 use coffee::graphics::{Image, Color, Rectangle};
-use rand::{rng, Rng};
-use rand::rngs::ThreadRng;
 use std::path::{PathBuf};
-use crate::{WINDOW_HEIGHT,WINDOW_WIDTH};
 
 pub struct Assets {
     pub player_sprite_sheet: Image,
@@ -13,6 +10,8 @@ pub struct Assets {
 impl Assets {
     pub const WHITE:Color = Color{r:1.0,g:1.0,b:1.0,a:1.0};
     pub const GREY:Color = Color{r:0.5,g:0.5,b:0.5,a:1.0};
+    pub const BLACK:Color = Color{r:0.0,g:0.0,b:0.0,a:1.0};
+    pub const MESH_STROKE_WIDTH:f32 = 2.0;
 
     pub fn load() -> Task<Assets> {
         let path = PathBuf::from("resources/hero.png");
@@ -24,26 +23,6 @@ impl Assets {
         })
     }
 }
-
-pub struct PlatformGenerator{
-    generator: ThreadRng
-}
-
-impl PlatformGenerator {
-    pub fn new() -> PlatformGenerator {
-        PlatformGenerator { generator: rng() }
-    }
-
-    pub fn generate_platform(&mut self) -> Rectangle<f32> {
-        let x = self.generator.random_range(0.0 ..= WINDOW_WIDTH);
-        let y = self.generator.random_range(0.0 ..= WINDOW_HEIGHT);
-        let width:f32 = self.generator.random_range(100.0 .. 200.0);
-        let height:f32 = 20.0;
-
-        Rectangle { x,y,width,height }
-    }
-}
-
 pub struct PlayerSpriteSlices {
     pub idle: Rectangle<u16>,
     pub left: Rectangle<u16>,
