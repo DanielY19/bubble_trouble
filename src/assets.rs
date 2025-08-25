@@ -1,5 +1,5 @@
 use coffee::load::{Task};
-use coffee::graphics::{Image, Mesh, Rectangle};
+use coffee::graphics::{Image, Color, Rectangle};
 use rand::{rng, Rng};
 use rand::rngs::ThreadRng;
 use std::path::{PathBuf};
@@ -11,6 +11,9 @@ pub struct Assets {
 }
 
 impl Assets {
+    pub const WHITE:Color = Color{r:1.0,g:1.0,b:1.0,a:1.0};
+    pub const GREY:Color = Color{r:0.5,g:0.5,b:0.5,a:1.0};
+
     pub fn load() -> Task<Assets> {
         let path = PathBuf::from("resources/hero.png");
         let player_spirte_sheet_task = Image::load(path);
@@ -51,9 +54,12 @@ pub struct PlayerSpriteSlices {
 }
 
 impl PlayerSpriteSlices {
+    pub const PLAYER_SPRITE_SHEET_ROWS:u16 = 4;
+    pub const PLAYER_SPRITE_SHEET_COLS:u16 = 3;
+
     pub fn new(width: u16, height: u16) -> Self {
-        let frame_width = width / 4;
-        let frame_height = height / 3;
+        let frame_width = width / Self::PLAYER_SPRITE_SHEET_ROWS;
+        let frame_height = height / Self::PLAYER_SPRITE_SHEET_COLS;
 
         Self {
             idle: Rectangle {

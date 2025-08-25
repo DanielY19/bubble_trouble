@@ -1,8 +1,5 @@
 use coffee::graphics::{Color, Frame, Mesh, Point, Rectangle, Sprite, Shape};
-use rand::rngs::ThreadRng;
-use rand::Rng;
-use crate::{assets::*, WINDOW_WIDTH};
-use crate::WINDOW_HEIGHT;
+use crate::{assets::*,WINDOW_WIDTH,WINDOW_HEIGHT};
 
 pub enum Action {
     Idle,
@@ -72,13 +69,28 @@ pub struct Platform{
 }
 
 impl Platform{
+    pub const GROUND_HEIGHT: f32 = 30.0;
+
     pub fn new(position: Rectangle<f32>) -> Platform {
         Platform{ position }
     }
 
+    pub fn ground() -> Platform {
+        let ground_position = Point::new(0.0,WINDOW_HEIGHT - Self::GROUND_HEIGHT);
+
+        let ground_params = Rectangle {
+                x:ground_position.x,
+                y:ground_position.y,
+                width:WINDOW_WIDTH,
+                height:Self::GROUND_HEIGHT
+         };
+
+        Platform::new(ground_params)
+    }
+
     pub fn draw(&mut self, frame: &mut Frame) {
         let shape = &mut Mesh::new();
-        shape.fill(Shape::Rectangle(self.position), Color::new(1.0,1.0,1.0,1.0));
+        shape.fill(Shape::Rectangle(self.position), Assets::WHITE);
         shape.draw(&mut frame.as_target());
     }
 }

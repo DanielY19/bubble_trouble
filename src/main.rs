@@ -1,5 +1,5 @@
 use bubble_trouble::entities::Player;
-use coffee::graphics::{Color, Frame, Rectangle, Window, WindowSettings, Sprite, Point};
+use coffee::graphics::{Frame, Rectangle, Window, WindowSettings, Point};
 use coffee::load::Task;
 use coffee::{Game, Result, Timer};
 
@@ -26,22 +26,26 @@ struct GameState {
 impl GameState{
     pub fn load() -> Task<GameState>{
         Assets::load().map(|assets| {
-            let position = Rectangle{
-                x:500.0,
-                y:300.0,
+            let number_of_platforms = 4;
+            let mut platform_generator = PlatformGenerator::new();
+
+            let ground = Platform::ground();
+            let ground_y_pos = ground.position.y;
+            let mut platforms = vec![ground];
+
+            for _ in 1..number_of_platforms {
+                platforms.push(Platform::new(platform_generator.generate_platform()));
+            }
+
+            let start_position = Rectangle{
+                x:WINDOW_WIDTH / 2.0 - assets.player_sprite_slices.idle.width as f32,
+                y:ground_y_pos - assets.player_sprite_slices.idle.height as f32,
                 width:assets.player_sprite_slices.idle.width as f32,
                 height:assets.player_sprite_slices.idle.height as f32,
             };
 
-            let mut platform_generator = PlatformGenerator::new();
 
-            let mut platforms = Vec::new();
-
-            for i in 0..3 {
-                platforms.push(Platform::new(platform_generator.generate_platform()));
-            }
-
-            let player = Player::new(position);
+            let player = Player::new(start_position);
             GameState { assets, player, platforms }
         })
     }
@@ -56,7 +60,7 @@ impl Game for GameState {
     }
 
     fn draw(&mut self, frame: &mut Frame, _timer: &Timer) {
-        frame.clear(Color::new(0.5,0.5,0.5,0.0));
+        frame.clear(Assets::GREY);
         self.player.draw(frame, &self.assets,self.assets.player_sprite_slices.idle);
         
         for platform in &mut self.platforms {
