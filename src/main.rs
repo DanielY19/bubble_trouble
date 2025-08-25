@@ -14,6 +14,10 @@ pub struct ParameterGenerator{
 }
 
 impl ParameterGenerator {
+    pub const PLATFORM_HEIGHT:f32 = 20.0;
+    pub const PLATFORM_WIDTH_LOWER_BOUND:f32 = 100.0;
+    pub const PLATFORM_WIDTH_HIGHER_BOUND:f32 = 200.0;
+
     pub fn new() -> ParameterGenerator {
         ParameterGenerator { generator: rng() }
     }
@@ -21,8 +25,8 @@ impl ParameterGenerator {
     pub fn generate_platform(&mut self) -> Rectangle<f32> {
         let x = self.generator.random_range(0.0 ..= WINDOW_WIDTH);
         let y = self.generator.random_range(0.0 ..= WINDOW_HEIGHT);
-        let width:f32 = self.generator.random_range(100.0 .. 200.0);
-        let height:f32 = 20.0;
+        let width:f32 = self.generator.random_range(Self::PLATFORM_WIDTH_LOWER_BOUND .. Self::PLATFORM_WIDTH_HIGHER_BOUND);
+        let height:f32 = Self::PLATFORM_HEIGHT;
 
         Rectangle { x,y,width,height }
     }
@@ -76,7 +80,7 @@ impl GameState{
                 platforms.push(Platform::new(parameter_generator.generate_platform()));
             }
 
-            let bubble = Bubble::new(Rectangle { x: 500.0, y: 300.0, width: 50.0, height: 50.0 },(150.0,0.0));
+            let bubble = Bubble::new(Rectangle { x: 500.0, y: 300.0, width: 50.0, height: 50.0 },(150.0,75.0));
             let bubbles = vec![bubble];
 
             let player_start_position = Rectangle{
@@ -105,6 +109,9 @@ impl Game for GameState {
         for bubble in &mut self.bubbles{
             bubble.update(Self::SECONDS_FOR_FRAME);
 
+            for platform in &self.platforms[1..] {
+                bubble.bounce_off_platform(platform);
+            }
         }
         
         if self.bubbles.len() < 2 {
@@ -115,7 +122,7 @@ impl Game for GameState {
 
     fn draw(&mut self, frame: &mut Frame, _timer: &Timer) {
         frame.clear(Assets::GREY);
-        self.player.draw(frame, &self.assets,self.assets.player_sprite_slices.idle);
+        self.player.draw(frame, &self.assets,self.assets.player_sprite_slices.left_step);
         let mut shapes = vec![self.player.position];
         
         for platform in &self.platforms {

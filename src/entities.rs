@@ -1,7 +1,6 @@
 use coffee::graphics::{Frame, Mesh, Point, Rectangle, Sprite, Shape, Color};
 use crate::{assets::*,WINDOW_WIDTH,WINDOW_HEIGHT};
-
-pub const GRAVITY: f32 = 3.0;
+use crate::utils::{self, check_collision, Collision};
 pub enum Action {
     Idle,
     Left,
@@ -17,6 +16,7 @@ pub struct Player {
 }
 
 impl Player {
+    pub const PLAYER_GRAVITY: f32 = 3.0;
     pub const SPEED: f32 = 500.0;
     pub const JUMP: f32 = 10.0;
 
@@ -47,7 +47,7 @@ impl Player {
             _ => (),
         }
 
-        self.velocity += GRAVITY * seconds;
+        self.velocity += Self::PLAYER_GRAVITY * seconds;
 
         self.position.y += self.velocity * seconds;
         self.position.y = f32::clamp(self.position.y, 0.0, WINDOW_HEIGHT)
@@ -108,6 +108,8 @@ pub struct Bubble {
 
 impl Bubble{
     pub const BUBBLE_STROKE_WIDTH: f32 = 2.0;
+    pub const ENERGY_LOSS:f32 = 0.9;
+    pub const BUBBLE_GRAVITY:f32 = 100.0;
 
     pub fn new(position: Rectangle<f32>, velocity: (f32,f32)) -> Bubble {
         let radius = position.width / 2.0;
@@ -115,14 +117,13 @@ impl Bubble{
     }
 
     pub fn update(&mut self, seconds: f32) {
-        self.velocity.1 += GRAVITY * seconds;
+        self.velocity.1 += Self::BUBBLE_GRAVITY * seconds;
 
         self.position.x += self.velocity.0 * seconds;
         self.position.y += self.velocity.1 * seconds;
 
-        if self.position.x + self.radius <= self.radius || self.position.x + self.radius >= WINDOW_WIDTH - self.radius {
-             self.velocity.0 = -self.velocity.0;
-        }
+        self.bounce_off_wall();
+        self.bounce_off_ground();
     }
 
     pub fn pop(self) -> Vec<Bubble> {
@@ -136,12 +137,24 @@ impl Bubble{
             ]
     }
 
-    pub fn bounce_off_platform(&mut self, platform: &Platform) {
-
+    pub fn bounce_off_wall(&mut self){
+        if self.position.x + self.radius <= self.radius || self.position.x + self.radius >= WINDOW_WIDTH - self.radius {
+             self.velocity.0 = -self.velocity.0;
+        }
     }
 
-    pub fn bounce_off_ground(&mut self, ground: &Platform) {
+    pub fn bounce_off_ground(&mut self) {
+        if self.position.y + self.radius > WINDOW_HEIGHT - Platform::GROUND_HEIGHT - self.radius {
+            self.velocity.1 *= -Self::ENERGY_LOSS;
+        }
+    }
 
+    pub fn bounce_off_platform(&mut self, platform: &Platform) {
+        match check_collision(&self.position, &platform.position) {
+            Collision::Horizontal => {self.velocity.0 *= -1.0},
+            Collision::Vertical => {self.velocity.1 *= -1.0},
+            _=> ()
+        };
     }
 
     pub fn draw(&self, frame: &mut Frame, color: Color) {
