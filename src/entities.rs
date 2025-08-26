@@ -1,6 +1,5 @@
 use coffee::graphics::{Frame, Mesh, Point, Rectangle, Sprite, Shape, Color};
 use crate::{assets::*,WINDOW_WIDTH,WINDOW_HEIGHT};
-use crate::utils::*;
 pub enum Action {
     Idle,
     Left,
@@ -11,19 +10,19 @@ pub enum Action {
 }
 pub struct Player {
     pub position: Rectangle<f32>,
-    velocity: f32,
-    on_ground: bool,
+    pub velocity: (f32, f32),
+    pub on_ground: bool,
 }
 
 impl Player {
     const PLAYER_GRAVITY: f32 = 3.0;
-    const SPEED: f32 = 500.0;
+    const SPEED: f32 = 200.0;
     const JUMP: f32 = 10.0;
 
     pub fn new(position: Rectangle<f32>) -> Self {
         Player {
             position,
-            velocity: 0.0,
+            velocity: (Self::SPEED,Self::JUMP),
             on_ground: true,
         }
     }
@@ -31,26 +30,47 @@ impl Player {
     pub fn update(&mut self, action: Action, seconds: f32) {
         match action {
             Action::Left => {
-                self.position.x -= seconds * Self::SPEED;
+                self.position.x -= seconds * self.velocity.0;
                 self.position.x = f32::clamp(self.position.x, 0.0, crate::WINDOW_WIDTH);
             }
             Action::Right => {
-                self.position.x += seconds * Self::SPEED;
+                self.position.x += seconds * self.velocity.0;
                 self.position.x = f32::clamp(self.position.x, 0.0, crate::WINDOW_WIDTH);
             }
             Action::Up => {
                 if self.on_ground {
-                    self.velocity = Self::JUMP;
+                    self.velocity.1 = Self::JUMP;
                     self.on_ground = false;
                 }
             }
             _ => (),
         }
 
-        self.velocity += Self::PLAYER_GRAVITY * seconds;
+        if !self.on_ground {
+            self.velocity.1 += Self::PLAYER_GRAVITY * seconds;
+    
+            self.position.y += self.velocity.1 * seconds;
+            self.position.y = f32::clamp(self.position.y, 0.0, WINDOW_HEIGHT)
+        }
+    }
 
-        self.position.y += self.velocity * seconds;
-        self.position.y = f32::clamp(self.position.y, 0.0, WINDOW_HEIGHT)
+    pub fn collide_with_platform_horizontal(&mut self) {
+        self.velocity.0 = 0.0; 
+        self.on_ground = false;
+    }
+
+    pub fn collide_with_platform_top(&mut self) {
+        self.on_ground = true;
+    }
+
+    pub fn collide_with_platform_bottom(&mut self) {
+        self.velocity.1 = 0.0;
+        self.on_ground = false;
+    }
+
+    pub fn no_collision(&mut self) {
+        self.velocity   = (Player::SPEED,Player::JUMP); 
+        self.on_ground = false;
     }
 
     pub fn draw(&self, frame: &mut Frame, assets: &Assets, motion: Rectangle<u16>) {
@@ -71,11 +91,11 @@ pub struct Platform{
 impl Platform{
     const GROUND_HEIGHT: f32 = 30.0;
 
-    pub fn new(position: Rectangle<f32>) -> Platform {
+    pub fn new(position: Rectangle<f32>) -> Self {
         Platform{ position }
     }
 
-    pub fn ground() -> Platform {
+    pub fn ground() -> Self {
         let ground_position = Point::new(0.0,WINDOW_HEIGHT - Self::GROUND_HEIGHT);
 
         let ground_params = Rectangle {
@@ -111,7 +131,7 @@ impl Bubble{
     const ENERGY_LOSS:f32 = 0.9;
     const BUBBLE_GRAVITY:f32 = 100.0;
 
-    pub fn new(position: Rectangle<f32>, velocity: (f32,f32)) -> Bubble {
+    pub fn new(position: Rectangle<f32>, velocity: (f32,f32)) -> Self {
         let radius = position.width / 2.0;
         Bubble{ position, radius, velocity }
     }
@@ -121,12 +141,9 @@ impl Bubble{
 
         self.position.x += self.velocity.0 * seconds;
         self.position.y += self.velocity.1 * seconds;
-
-        self.bounce_off_wall();
-        self.bounce_off_ground();
     }
 
-    pub fn pop(self) -> Vec<Bubble> {
+    pub fn pop(&self) -> Vec<Self> {
         let mut position = self.position;
         position.width /= 2.0;
         position.height /= 2.0;
@@ -137,24 +154,24 @@ impl Bubble{
             ]
     }
 
-    pub fn bounce_off_wall(&mut self){
-        if self.position.x + self.radius <= self.radius || self.position.x + self.radius >= WINDOW_WIDTH - self.radius {
-             self.velocity.0 = -self.velocity.0;
-        }
+    pub fn bounce_off_wall(&mut self) {
+        self.velocity.0 = -self.velocity.0;
+    }
+
+    pub fn bounce_off_ceiling(&mut self) {
+        self.velocity.1 = -self.velocity.1;
     }
 
     pub fn bounce_off_ground(&mut self) {
-        if self.position.y + self.radius > WINDOW_HEIGHT - Platform::GROUND_HEIGHT - self.radius {
-            self.velocity.1 *= -Self::ENERGY_LOSS;
-        }
+        self.velocity.1 *= -Self::ENERGY_LOSS;
     }
 
-    pub fn bounce_off_platform(&mut self, platform: &Platform) {
-        match check_collision(&self.position, &platform.position) {
-            Collision::Horizontal => {self.velocity.0 *= -1.0},
-            Collision::Vertical => {self.velocity.1 *= -1.0},
-            _=> ()
-        };
+    pub fn bounce_off_platform_horizontal(&mut self) {
+        self.velocity.0 *= -1.0;
+    }
+
+    pub fn bounce_off_platform_vertical(&mut self) {
+        self.velocity.1 *= -1.0;
     }
 
     pub fn draw(&self, frame: &mut Frame, color: Color) {
@@ -177,10 +194,20 @@ pub struct Harpoon {
 }
 
 impl Harpoon {
-    pub const HARPOON_VELOCITY: f32 = 100.0;
+    pub const HARPOON_VELOCITY: f32 = 200.0;
 
-    pub fn new(position: Rectangle<f32>, state: HarpoonState) -> Harpoon {
-        Harpoon { position, state }
+    pub fn new(position: Rectangle<f32>, state: HarpoonState) -> Self {
+        Harpoon { position ,state }
+    }
+
+    pub fn hit_bubble(&mut self) {
+        self.state = HarpoonState::Inactive;
+    }
+
+    pub fn hit_platform(&mut self) {
+        if let HarpoonState::Active = self.state {
+            self.state = HarpoonState::Stationary;
+        }
     }
 
     pub fn update(&mut self, seconds: f32) {

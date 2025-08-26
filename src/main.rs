@@ -1,13 +1,10 @@
-use bubble_trouble::entities::Player;
 use coffee::graphics::{Color, Frame, Shape, Rectangle, Window, WindowSettings, Mesh};
 use coffee::load::Task;
 use coffee::{Game, Result, Timer};
 use rand::{rng, Rng};
 use rand::rngs::ThreadRng;
 
-use bubble_trouble::{WINDOW_HEIGHT,WINDOW_WIDTH};
-use bubble_trouble::assets::*;
-use bubble_trouble::entities::*;
+use bubble_trouble::{WINDOW_HEIGHT,WINDOW_WIDTH,assets::*,entities::*,collision::*};
 
 pub struct ParameterGenerator{
     generator: ThreadRng
@@ -82,7 +79,7 @@ impl GameState{
             }
 
             let bubble = Bubble::new(Rectangle { x: 500.0, y: 300.0, width: 50.0, height: 50.0 },(150.0,75.0));
-            let bubbles = vec![bubble];
+            let mut bubbles = vec![bubble];
 
             let player_start_position = Rectangle{
                 x:WINDOW_WIDTH / 2.0 - assets.player_sprite_slices.idle.width as f32,
@@ -101,12 +98,13 @@ impl GameState{
             let harpoon = Harpoon::new(harpoon_start_position, HarpoonState::Active);
 
             let player = Player::new(player_start_position);
+
             GameState { assets, player, harpoon ,platforms,bubbles, parameter_generator }
         })
     }
 }
 
-impl Game for GameState {
+impl<'a> Game for GameState {
     type Input = ();
     type LoadingScreen = ();
 
@@ -115,19 +113,18 @@ impl Game for GameState {
     }
 
     fn update(&mut self, _window: &Window) {
+        CollisionSystem::player_platforms_collision(&mut self.player, &self.platforms);
+        CollisionSystem::bubbles_walls_collision(&mut self.bubbles);
+        CollisionSystem::bubbles_ceiling_collision(&mut self.bubbles);
+        CollisionSystem::bubbles_platforms_collision(&mut self.bubbles, &self.platforms);
+        CollisionSystem::harpoon_platform_collision(&mut self.harpoon, &self.platforms);
+        CollisionSystem::harpoon_bubbles_collision(&mut self.harpoon, &mut self.bubbles);
+        CollisionSystem::harpoon_ceiling_collision(&mut self.harpoon);
+
         self.harpoon.update(Self::SECONDS_FOR_FRAME);
 
         for bubble in &mut self.bubbles{
             bubble.update(Self::SECONDS_FOR_FRAME);
-
-            for platform in &self.platforms[1..] {
-                bubble.bounce_off_platform(platform);
-            }
-        }
-        
-        if self.bubbles.len() < 2 {
-            let temp = self.bubbles.remove(0);
-            self.bubbles.append(&mut temp.pop());
         }
     }
 
@@ -153,5 +150,9 @@ impl Game for GameState {
                 mesh.draw(&mut frame.as_target());
             }    
         }
+    }
+
+    fn is_finished(&self) -> bool {
+             CollisionSystem::player_bubbles_collision(&self.player, &self.bubbles)
     }
 }
