@@ -102,7 +102,7 @@ impl CollisionSystem{
 
             match collision {
                 Collision::None => true,
-                _  => if let HarpoonState::Active | HarpoonState::Stationary = harpoon.state{
+                _  => if let HarpoonState::Active | HarpoonState::Stationary = harpoon.state {
                     harpoon.hit_bubble();
                     spawned_bubbles.append(&mut bubble.pop());
                     false 

@@ -79,7 +79,7 @@ impl GameState{
             }
 
             let bubble = Bubble::new(Rectangle { x: 500.0, y: 300.0, width: 50.0, height: 50.0 },(150.0,75.0));
-            let mut bubbles = vec![bubble];
+            let bubbles = vec![bubble];
 
             let player_start_position = Rectangle{
                 x:WINDOW_WIDTH / 2.0 - assets.player_sprite_slices.idle.width as f32,
@@ -121,6 +121,7 @@ impl<'a> Game for GameState {
         CollisionSystem::harpoon_bubbles_collision(&mut self.harpoon, &mut self.bubbles);
         CollisionSystem::harpoon_ceiling_collision(&mut self.harpoon);
 
+        self.player.update(Action::Left, Self::SECONDS_FOR_FRAME);
         self.harpoon.update(Self::SECONDS_FOR_FRAME);
 
         for bubble in &mut self.bubbles{

@@ -15,9 +15,9 @@ pub struct Player {
 }
 
 impl Player {
-    const PLAYER_GRAVITY: f32 = 3.0;
-    const SPEED: f32 = 200.0;
-    const JUMP: f32 = 10.0;
+    const PLAYER_GRAVITY: f32 = 100.0;
+    const SPEED: f32 = 100.0;
+    const JUMP: f32 = 150.0;
 
     pub fn new(position: Rectangle<f32>) -> Self {
         Player {
@@ -31,11 +31,11 @@ impl Player {
         match action {
             Action::Left => {
                 self.position.x -= seconds * self.velocity.0;
-                self.position.x = f32::clamp(self.position.x, 0.0, crate::WINDOW_WIDTH);
+                self.position.x = f32::clamp(self.position.x, 0.0, WINDOW_WIDTH - self.position.width);
             }
             Action::Right => {
                 self.position.x += seconds * self.velocity.0;
-                self.position.x = f32::clamp(self.position.x, 0.0, crate::WINDOW_WIDTH);
+                self.position.x = f32::clamp(self.position.x, 0.0, WINDOW_WIDTH - self.position.width);
             }
             Action::Up => {
                 if self.on_ground {
@@ -47,10 +47,10 @@ impl Player {
         }
 
         if !self.on_ground {
-            self.velocity.1 += Self::PLAYER_GRAVITY * seconds;
+            self.velocity.1 -= Self::PLAYER_GRAVITY * seconds;
     
-            self.position.y += self.velocity.1 * seconds;
-            self.position.y = f32::clamp(self.position.y, 0.0, WINDOW_HEIGHT)
+            self.position.y -= self.velocity.1 * seconds;
+            self.position.y = f32::clamp(self.position.y, 0.0, WINDOW_HEIGHT - Platform::GROUND_HEIGHT)
         }
     }
 
@@ -69,8 +69,7 @@ impl Player {
     }
 
     pub fn no_collision(&mut self) {
-        self.velocity   = (Player::SPEED,Player::JUMP); 
-        self.on_ground = false;
+        self.velocity   = (Player::SPEED,Player::JUMP);
     }
 
     pub fn draw(&self, frame: &mut Frame, assets: &Assets, motion: Rectangle<u16>) {
@@ -128,7 +127,7 @@ pub struct Bubble {
 
 impl Bubble{
     const BUBBLE_STROKE_WIDTH: f32 = 2.0;
-    const ENERGY_LOSS:f32 = 0.9;
+    const ENERGY_LOSS:f32 = 0.99;
     const BUBBLE_GRAVITY:f32 = 100.0;
 
     pub fn new(position: Rectangle<f32>, velocity: (f32,f32)) -> Self {
