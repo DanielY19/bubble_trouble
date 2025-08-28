@@ -1,4 +1,4 @@
-use crate::{entities::*,WINDOW_WIDTH,WINDOW_HEIGHT};
+use crate::{entities::*,WINDOW_WIDTH};
 use coffee::graphics::Rectangle;
 
 pub enum Collision {
@@ -34,44 +34,30 @@ impl CollisionSystem{
 
     pub fn player_platforms_collision(player: &mut Player, platforms: &Vec<Platform>) {
         platforms.iter().for_each(|platform| {
-            let collision = Self::check_collision(&player.position, &platform.position);
-
-            match collision {
+            match CollisionSystem::check_collision(&player.position, &platform.position) {
                 Collision::Left | Collision::Right  => { player.collide_with_platform_horizontal(); }
                 Collision::Top                      => { player.collide_with_platform_top();}
                 Collision::Bottom                   => { player.collide_with_platform_bottom();}
-                Collision::None                     => { player.no_collision(); }
+                Collision::None                     => { player.no_collision();}
+                _ => ()
             }
         });    
     }
 
     pub fn player_bubbles_collision(player: &Player, bubbles: &Vec<Bubble>) -> bool {
-        let mut result = false;
-
-        bubbles.iter().for_each(|bubble| {
-            let collision = Self::check_collision(&player.position, &bubble.position);
-
-            match collision {
-                Collision::None => (),
-                _ => { result = true; },
-            }
-        });
-
-        result 
+        bubbles.iter().any(|bubble| {
+             !matches!(CollisionSystem::check_collision(&player.position, &bubble.position), Collision::None)
+        })
     }
 
     pub fn bubbles_platforms_collision(bubbles: &mut Vec<Bubble>, platforms: &Vec<Platform>) {
         bubbles.iter_mut().for_each(|bubble| {
             platforms.iter().enumerate().for_each(|(i,platform)| {
-                let collision = Self::check_collision(&bubble.position, &platform.position);
-                
-                match collision {
-                    Collision::Left | Collision::Right => {bubble.bounce_off_platform_horizontal();}
+                match CollisionSystem::check_collision(&bubble.position, &platform.position) {
+                    Collision::Left | Collision::Right => {bubble.bounce_off_wall();}
                     Collision::Top | Collision::Bottom => 
-                    if i == 0 
-                    {bubble.bounce_off_ground();} 
-                    else {bubble.bounce_off_platform_vertical();}
-
+                    if i == 0 {bubble.bounce_off_ground();} 
+                    else {bubble.bounce_off_ceiling();}
                     _ => ()
                 }
             }); 
@@ -98,13 +84,13 @@ impl CollisionSystem{
         let mut spawned_bubbles = Vec::new();
 
         bubbles.retain(|bubble| {
-            let collision = Self::check_collision(&harpoon.position, &bubble.position);
-
-            match collision {
+            match CollisionSystem::check_collision(&harpoon.position, &bubble.position) {
                 Collision::None => true,
                 _  => if let HarpoonState::Active | HarpoonState::Stationary = harpoon.state {
                     harpoon.hit_bubble();
-                    spawned_bubbles.append(&mut bubble.pop());
+                    if let Some(mut child_bubbles) = bubble.pop() {
+                        spawned_bubbles.append(&mut child_bubbles);
+                    }
                     false 
                 }
                 else {
@@ -118,9 +104,7 @@ impl CollisionSystem{
 
     pub fn harpoon_platform_collision(harpoon: &mut Harpoon, platforms: &Vec<Platform>) {
         platforms.iter().for_each(|platform| {
-            let collision = Self::check_collision(&harpoon.position, &platform.position);
-
-            match collision {
+            match CollisionSystem::check_collision(&harpoon.position, &platform.position) {
                 Collision::Bottom => harpoon.hit_platform(),
                _ => (),
             }

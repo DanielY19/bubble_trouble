@@ -1,42 +1,9 @@
 use coffee::graphics::{Color, Frame, Shape, Rectangle, Window, WindowSettings, Mesh};
-use coffee::load::Task;
 use coffee::{Game, Result, Timer};
-use rand::{rng, Rng};
-use rand::rngs::ThreadRng;
+use coffee::load::Task;
+use coffee::input::{Keyboard,keyboard::KeyCode};
 
-use bubble_trouble::{WINDOW_HEIGHT,WINDOW_WIDTH,assets::*,entities::*,collision::*};
-
-pub struct ParameterGenerator{
-    generator: ThreadRng
-}
-
-impl ParameterGenerator {
-    const PLATFORM_HEIGHT:f32 = 20.0;
-    const PLATFORM_WIDTH_LOWER_BOUND:f32 = 100.0;
-    const PLATFORM_WIDTH_HIGHER_BOUND:f32 = 200.0;
-
-    pub fn new() -> ParameterGenerator {
-        ParameterGenerator { generator: rng() }
-    }
-
-    pub fn generate_platform(&mut self) -> Rectangle<f32> {
-        let x = self.generator.random_range(0.0 ..= WINDOW_WIDTH);
-        let y = self.generator.random_range(0.0 ..= WINDOW_HEIGHT);
-        let width:f32 = self.generator.random_range(Self::PLATFORM_WIDTH_LOWER_BOUND .. Self::PLATFORM_WIDTH_HIGHER_BOUND);
-        let height:f32 = Self::PLATFORM_HEIGHT;
-
-        Rectangle { x,y,width,height }
-    }
-
-    pub fn generate_random_color(&mut self) -> Color {
-        Color{
-            r: self.generator.random_range(0.0..=1.0),
-            g: self.generator.random_range(0.0..=1.0),
-            b: self.generator.random_range(0.0..=1.0),
-            a:1.0
-        }
-    }
-}
+use bubble_trouble::{WINDOW_HEIGHT,WINDOW_WIDTH,assets::*,entities::*,collision::*,parameter_generator::ParameterGenerator};
 
 pub fn is_debug_active() -> bool {
     std::env::var("DEBUG").is_ok()
@@ -63,20 +30,14 @@ struct GameState {
 }
 
 impl GameState{
-    const SECONDS_FOR_FRAME: f32 = 1.0 / Self::TICKS_PER_SECOND as f32;
+    const SECONDS_FOR_FRAME: f32 = 1.0 / GameState::TICKS_PER_SECOND as f32;
 
     pub fn load() -> Task<GameState>{
         Assets::load().map(|assets| {
-            let number_of_platforms = 4;
             let mut parameter_generator = ParameterGenerator::new();
 
-            let ground = Platform::ground();
-            let ground_y_pos = ground.position.y;
-            let mut platforms = vec![ground];
-
-            for _ in 1..number_of_platforms {
-                platforms.push(Platform::new(parameter_generator.generate_platform()));
-            }
+            let platforms = Platform::generate_platforms(&mut parameter_generator);
+            let ground_y_pos = platforms.first().unwrap().position.y;
 
             let bubble = Bubble::new(Rectangle { x: 500.0, y: 300.0, width: 50.0, height: 50.0 },(150.0,75.0));
             let bubbles = vec![bubble];
@@ -95,9 +56,10 @@ impl GameState{
                 height: 0.0,
             };
 
-            let harpoon = Harpoon::new(harpoon_start_position, HarpoonState::Active);
+            let harpoon = Harpoon::new(harpoon_start_position, HarpoonState::Inactive);
 
             let player = Player::new(player_start_position);
+
 
             GameState { assets, player, harpoon ,platforms,bubbles, parameter_generator }
         })
@@ -105,7 +67,7 @@ impl GameState{
 }
 
 impl<'a> Game for GameState {
-    type Input = ();
+    type Input = Keyboard;
     type LoadingScreen = ();
 
     fn load(window: &Window) -> Task<GameState> {
@@ -121,11 +83,11 @@ impl<'a> Game for GameState {
         CollisionSystem::harpoon_bubbles_collision(&mut self.harpoon, &mut self.bubbles);
         CollisionSystem::harpoon_ceiling_collision(&mut self.harpoon);
 
-        self.player.update(Action::Left, Self::SECONDS_FOR_FRAME);
-        self.harpoon.update(Self::SECONDS_FOR_FRAME);
+        self.player.update(Action::Idle, GameState::SECONDS_FOR_FRAME);
+        self.harpoon.update(GameState::SECONDS_FOR_FRAME);
 
         for bubble in &mut self.bubbles{
-            bubble.update(Self::SECONDS_FOR_FRAME);
+            bubble.update(GameState::SECONDS_FOR_FRAME);
         }
     }
 
@@ -154,6 +116,23 @@ impl<'a> Game for GameState {
     }
 
     fn is_finished(&self) -> bool {
-             CollisionSystem::player_bubbles_collision(&self.player, &self.bubbles)
+        CollisionSystem::player_bubbles_collision(&self.player, &self.bubbles)
+    }
+
+    fn interact(&mut self, _input: &mut Self::Input, _window: &mut Window) {
+        if _input.is_key_pressed(KeyCode::W) {
+            self.player.update(Action::Up, GameState::SECONDS_FOR_FRAME);
+        }
+        if _input.is_key_pressed(KeyCode::A) {
+            self.player.update(Action::Left, GameState::SECONDS_FOR_FRAME);
+        }
+        if _input.is_key_pressed(KeyCode::D) {
+            self.player.update(Action::Right, GameState::SECONDS_FOR_FRAME);
+        }
+        if _input.is_key_pressed(KeyCode::Space) {
+            //if self.player.on_ground {
+                self.harpoon.fire(&self.player.position);
+            //}
+        }
     }
 }
