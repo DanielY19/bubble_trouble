@@ -33,15 +33,22 @@ impl CollisionSystem{
     }
 
     pub fn player_platforms_collision(player: &mut Player, platforms: &Vec<Platform>) {
-        platforms.iter().for_each(|platform| {
-            match CollisionSystem::check_collision(&player.position, &platform.position) {
-                Collision::Left | Collision::Right  => { player.collide_with_platform_horizontal(); }
-                Collision::Top                      => { player.collide_with_platform_top();}
-                Collision::Bottom                   => { player.collide_with_platform_bottom();}
-                Collision::None                     => { player.no_collision();}
-                _ => ()
+        if let Some(platform) = platforms.iter().find(|platform| {
+            let collision = CollisionSystem::check_collision(&player.position, &platform.position);
+            matches!(collision, Collision::Left | Collision::Right | Collision::Top | Collision::Bottom)
+            }) {
+                let collision = CollisionSystem::check_collision(&player.position, &platform.position);
+                match collision {
+                    Collision::Left | Collision::Right  => player.collide_with_platform_horizontal(platform, collision),
+                    Collision::Top                      => player.collide_with_platform_top(platform),
+                    Collision::Bottom                   => player.collide_with_platform_bottom(platform),
+                    Collision::None                     => ()
+                }
             }
-        });    
+        else {
+            player.no_collision();
+        }
+
     }
 
     pub fn player_bubbles_collision(player: &Player, bubbles: &Vec<Bubble>) -> bool {

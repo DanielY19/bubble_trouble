@@ -1,7 +1,7 @@
 //use std::ops::Range;
 
 use coffee::graphics::{Frame, Mesh, Point, Rectangle, Sprite, Shape, Color};
-use crate::{assets::*, parameter_generator::ParameterGenerator, WINDOW_HEIGHT, WINDOW_WIDTH};
+use crate::{assets::*, collision::Collision ,parameter_generator::ParameterGenerator, WINDOW_HEIGHT, WINDOW_WIDTH};
 pub enum Action {
     Idle,
     Left,
@@ -14,68 +14,97 @@ pub struct Player {
     pub position: Rectangle<f32>,
     pub velocity: (f32, f32),
     pub on_ground: bool,
+    pub motion: Rectangle<u16>,
+    pub motion_timer: f32,
 }
 
 impl Player {
-    const PLAYER_GRAVITY: f32 = 300.0;
+    const PLAYER_GRAVITY: f32 = 625.0;
     const SPEED: f32 = 200.0;
-    const JUMP: f32 = 350.0;
+    const JUMP: f32 = 550.0;
+    pub const PLAYER_MOTION_SWAP_DURATION: f32 = 0.25;
 
-    pub fn new(position: Rectangle<f32>) -> Player {
+    pub fn new(position: Rectangle<f32>, assets: &Assets) -> Player {
         Player {
             position,
-            velocity: (Player::SPEED,Player::JUMP),
+            velocity: (0.0,0.0),
             on_ground: true,
+            motion:assets.player_sprite_slices.idle,
+            motion_timer:0.0,
         }
     }
 
-    pub fn update(&mut self, action: Action, seconds: f32) {
+    pub fn handle_input(&mut self, action: Action) {
         match action {
-            Action::Left | Action::Right => {
-                let mut dx = 1.0;
-
-                if let Action::Left = action {
-                    dx = -1.0;
-                }
-
-                self.position.x += seconds * self.velocity.0 * dx;
-                self.position.x = f32::clamp(self.position.x, 0.0, WINDOW_WIDTH - self.position.width);
-            }
+            Action::Left => self.velocity.0 = -Player::SPEED,
+            Action::Right => self.velocity.0 = Player::SPEED,
+            Action::Idle => self.velocity.0 = 0.0,
             Action::Up => {
                 if self.on_ground {
                     self.velocity.1 = Player::JUMP;
                     self.on_ground = false;
+                    
                 }
             }
-            _ => if !self.on_ground {
-                self.velocity.1 -= Player::PLAYER_GRAVITY * seconds;
-                self.position.y -= self.velocity.1 * seconds;
-                self.position.y = f32::clamp(self.position.y, 0.0, WINDOW_HEIGHT);
-            },
+            _ => ()
         }
     }
 
-    pub fn collide_with_platform_horizontal(&mut self) {
-        self.velocity.0 = 0.0; 
+    pub fn animate(&mut self, seconds: f32, first_motion: Rectangle<u16>, second_motion: Rectangle<u16>) {
+        if self.motion_timer < Player::PLAYER_MOTION_SWAP_DURATION {
+                self.motion = first_motion;
+                self.motion_timer += seconds;
+            }
+            else if self.motion_timer < Player::PLAYER_MOTION_SWAP_DURATION * 2.0 {
+                self.motion = second_motion;
+                self.motion_timer += seconds;
+            }
+            else {
+                self.motion_timer = 0.0;
+        }
+    } 
+
+    pub fn update(&mut self, seconds: f32) {
+        if !self.on_ground {
+            self.velocity.1 -= Player::PLAYER_GRAVITY * seconds;
+        }
+
+        self.position.x += self.velocity.0 * seconds;
+        self.position.y -= self.velocity.1 * seconds;
+
+        self.position.x = f32::clamp(self.position.x, 0.0, WINDOW_WIDTH - self.position.width);
+        self.position.y = f32::clamp(self.position.y, 0.0, WINDOW_HEIGHT);
+    }
+
+    pub fn collide_with_platform_horizontal(&mut self, platform: &Platform, side: Collision) {
+        if let Collision::Left = side {
+            self.position.x = platform.position.x - self.position.width;
+         } else {
+            self.position.x = platform.position.x + platform.position.width;
+        }
+        self.velocity.0 = 0.0;
         self.on_ground = false;
     }
 
-    pub fn collide_with_platform_top(&mut self) {
+    pub fn collide_with_platform_top(&mut self, platform: &Platform) {
+        self.position.y = platform.position.y - self.position.height;
+        self.velocity.1 = 0.0;
         self.on_ground = true;
     }
 
-    pub fn collide_with_platform_bottom(&mut self) {
+    pub fn collide_with_platform_bottom(&mut self, platform: &Platform) {
+        self.position.y = platform.position.y + platform.position.height;
         self.velocity.1 = 0.0;
         self.on_ground = false;
     }
 
     pub fn no_collision(&mut self) {
-        self.velocity.0 = Player::SPEED;
+        self.on_ground = false;
     }
 
-    pub fn draw(&self, frame: &mut Frame, assets: &Assets, motion: Rectangle<u16>) {
+    pub fn draw(&self, frame: &mut Frame, assets: &Assets) {
         let player_sprite: Sprite = Sprite {
-            source: motion,
+            source: self.motion,
             position: Point::new(self.position.x,self.position.y),
             scale: assets.player_sprite_slices.scale
         };
@@ -209,13 +238,15 @@ pub enum HarpoonState {
 pub struct Harpoon {
     pub position: Rectangle<f32>,
     pub state: HarpoonState,
+    timer: f32
 }
 
 impl Harpoon {
     pub const HARPOON_VELOCITY: f32 = 200.0;
+    pub const HARPOON_DURATION: f32 = 2.0;
 
     pub fn new(position: Rectangle<f32>, state: HarpoonState) -> Harpoon {
-        Harpoon { position ,state }
+        Harpoon { position ,state, timer: 0.0 }
     }
 
     pub fn fire(&mut self, position: &Rectangle<f32>) {
@@ -240,6 +271,15 @@ impl Harpoon {
         if let HarpoonState::Active = self.state {
             self.position.y -= Harpoon::HARPOON_VELOCITY * seconds;
             self.position.height += Harpoon::HARPOON_VELOCITY * seconds;
+        }
+        else if let HarpoonState::Stationary = self.state {
+            if self.timer >= Harpoon::HARPOON_DURATION {
+                self.state = HarpoonState::Inactive;
+                self.timer = 0.0;
+            }
+            else {
+                self.timer += seconds;
+            }
         }
     }
 

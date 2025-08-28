@@ -58,8 +58,8 @@ impl GameState{
 
             let harpoon = Harpoon::new(harpoon_start_position, HarpoonState::Inactive);
 
-            let player = Player::new(player_start_position);
-
+            let mut player = Player::new(player_start_position,&assets);
+            player.handle_input(Action::Idle);
 
             GameState { assets, player, harpoon ,platforms,bubbles, parameter_generator }
         })
@@ -83,7 +83,7 @@ impl<'a> Game for GameState {
         CollisionSystem::harpoon_bubbles_collision(&mut self.harpoon, &mut self.bubbles);
         CollisionSystem::harpoon_ceiling_collision(&mut self.harpoon);
 
-        self.player.update(Action::Idle, GameState::SECONDS_FOR_FRAME);
+        self.player.update( GameState::SECONDS_FOR_FRAME);
         self.harpoon.update(GameState::SECONDS_FOR_FRAME);
 
         for bubble in &mut self.bubbles{
@@ -93,7 +93,7 @@ impl<'a> Game for GameState {
 
     fn draw(&mut self, frame: &mut Frame, _timer: &Timer) {
         frame.clear(Assets::GREY);
-        self.player.draw(frame, &self.assets,self.assets.player_sprite_slices.idle);
+        self.player.draw(frame, &self.assets);
         self.harpoon.draw(frame, &self.assets);
         let mut shapes = vec![self.player.position,self.harpoon.position];
         
@@ -121,18 +121,32 @@ impl<'a> Game for GameState {
 
     fn interact(&mut self, _input: &mut Self::Input, _window: &mut Window) {
         if _input.is_key_pressed(KeyCode::W) {
-            self.player.update(Action::Up, GameState::SECONDS_FOR_FRAME);
+            self.player.handle_input(Action::Up);
+            self.player.motion = self.assets.player_sprite_slices.idle;
         }
         if _input.is_key_pressed(KeyCode::A) {
-            self.player.update(Action::Left, GameState::SECONDS_FOR_FRAME);
+            self.player.handle_input(Action::Left);
+            self.player.animate(GameState::SECONDS_FOR_FRAME, 
+                self.assets.player_sprite_slices.left,
+                self.assets.player_sprite_slices.left_step);
         }
         if _input.is_key_pressed(KeyCode::D) {
-            self.player.update(Action::Right, GameState::SECONDS_FOR_FRAME);
+            self.player.handle_input(Action::Right);
+            self.player.animate(GameState::SECONDS_FOR_FRAME, 
+                self.assets.player_sprite_slices.right,
+                self.assets.player_sprite_slices.right_step);
         }
         if _input.is_key_pressed(KeyCode::Space) {
-            //if self.player.on_ground {
+            self.player.motion = self.assets.player_sprite_slices.idle;
+            if self.player.on_ground {
                 self.harpoon.fire(&self.player.position);
-            //}
+            }
+        }
+        else if _input.was_key_released(KeyCode::W) 
+        || _input.was_key_released(KeyCode::A)
+        || _input.was_key_released(KeyCode::D)  {
+            self.player.handle_input(Action::Idle);
+            self.player.motion = self.assets.player_sprite_slices.idle;
         }
     }
 }
