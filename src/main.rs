@@ -27,6 +27,7 @@ struct GameState {
     bubbles:Vec<Bubble>,
 
     parameter_generator: ParameterGenerator,
+    exit:bool,
 }
 
 impl GameState{
@@ -61,7 +62,7 @@ impl GameState{
             let mut player = Player::new(player_start_position,&assets.player_sprite_slices.idle);
             player.handle_input(Action::Idle);
 
-            GameState { assets, player, harpoon ,platforms,bubbles, parameter_generator }
+            GameState { assets, player, harpoon ,platforms,bubbles, parameter_generator, exit:false }
         })
     }
 }
@@ -116,7 +117,7 @@ impl<'a> Game for GameState {
     }
 
     fn is_finished(&self) -> bool {
-        CollisionSystem::player_bubbles_collision(&self.player, &self.bubbles)
+        CollisionSystem::player_bubbles_collision(&self.player, &self.bubbles) || self.exit
     }
 
     fn interact(&mut self, _input: &mut Self::Input, _window: &mut Window) {
@@ -142,7 +143,10 @@ impl<'a> Game for GameState {
                 self.harpoon.fire(&self.player.position);
             }
         }
-        else if _input.was_key_released(KeyCode::W) 
+        if _input.is_key_pressed(KeyCode::Escape) {
+            self.exit = true;
+        }
+        if _input.was_key_released(KeyCode::W) 
         || _input.was_key_released(KeyCode::A)
         || _input.was_key_released(KeyCode::D)  {
             self.player.handle_input(Action::Idle);
