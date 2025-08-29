@@ -34,8 +34,7 @@ impl CollisionSystem{
 
     pub fn player_platforms_collision(player: &mut Player, platforms: &Vec<Platform>) {
         if let Some(platform) = platforms.iter().find(|platform| {
-            let collision = CollisionSystem::check_collision(&player.position, &platform.position);
-            matches!(collision, Collision::Left | Collision::Right | Collision::Top | Collision::Bottom)
+            matches!(CollisionSystem::check_collision(&player.position, &platform.position), Collision::Left | Collision::Right | Collision::Top | Collision::Bottom)
             }) {
                 let collision = CollisionSystem::check_collision(&player.position, &platform.position);
                 match collision {
