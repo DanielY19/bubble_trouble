@@ -1,5 +1,3 @@
-//use std::ops::Range;
-
 use coffee::graphics::{Frame, Mesh, Point, Rectangle, Sprite, Shape, Color};
 use crate::{assets::*, collision::Collision ,parameter_generator::ParameterGenerator, WINDOW_HEIGHT, WINDOW_WIDTH};
 pub enum Action {

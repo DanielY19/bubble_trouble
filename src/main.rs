@@ -1,4 +1,4 @@
-use coffee::graphics::{Color, Frame, Shape, Rectangle, Window, WindowSettings, Mesh};
+use coffee::graphics::{Frame, Shape, Rectangle, Window, WindowSettings, Mesh};
 use coffee::{Game, Result, Timer};
 use coffee::load::Task;
 use coffee::input::{Keyboard,keyboard::KeyCode};

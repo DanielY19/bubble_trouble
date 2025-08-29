@@ -22,7 +22,6 @@ impl ParameterGenerator {
         let width:f32 = self.generator.random_range(ParameterGenerator::PLATFORM_WIDTH_LOWER_BOUND .. ParameterGenerator::PLATFORM_WIDTH_HIGHER_BOUND);
 
         let x = self.generator.random_range(ParameterGenerator::PLATFORM_WALL_BOUND ..= WINDOW_WIDTH - width - ParameterGenerator::PLATFORM_WALL_BOUND);
-        //let y = self.generator.random_range(range); fixed elevation seems a better option
 
         Rectangle { x,y:elevation,width,height:ParameterGenerator::PLATFORM_HEIGHT }
     }
