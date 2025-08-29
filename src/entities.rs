@@ -22,7 +22,7 @@ impl Player {
     const PLAYER_GRAVITY: f32 = 625.0;
     const SPEED: f32 = 200.0;
     const JUMP: f32 = 550.0;
-    pub const PLAYER_MOTION_SWAP_DURATION: f32 = 0.25;
+    const PLAYER_MOTION_SWAP_DURATION: f32 = 0.25;
 
     pub fn new(position: Rectangle<f32>, assets: &Assets) -> Player {
         Player {
@@ -50,13 +50,13 @@ impl Player {
         }
     }
 
-    pub fn animate(&mut self, seconds: f32, first_motion: Rectangle<u16>, second_motion: Rectangle<u16>) {
+    pub fn animate(&mut self, seconds: f32, first_motion: &Rectangle<u16>, second_motion: &Rectangle<u16>) {
         if self.motion_timer < Player::PLAYER_MOTION_SWAP_DURATION {
-                self.motion = first_motion;
+                self.motion = first_motion.clone();
                 self.motion_timer += seconds;
             }
             else if self.motion_timer < Player::PLAYER_MOTION_SWAP_DURATION * 2.0 {
-                self.motion = second_motion;
+                self.motion = second_motion.clone();
                 self.motion_timer += seconds;
             }
             else {
@@ -104,7 +104,7 @@ impl Player {
 
     pub fn draw(&self, frame: &mut Frame, assets: &Assets) {
         let player_sprite: Sprite = Sprite {
-            source: self.motion,
+            source: self.motion.clone(),
             position: Point::new(self.position.x,self.position.y),
             scale: assets.player_sprite_slices.scale
         };
@@ -118,7 +118,7 @@ pub struct Platform {
 }
 
 impl Platform {
-    pub const GROUND_HEIGHT: f32 = 30.0;
+    const GROUND_HEIGHT: f32 = 30.0;
     const DIFF_ELEVATION: f32 = 75.0;
     //const TOP_ELEVATION: f32 = 100.0;
 
@@ -126,7 +126,7 @@ impl Platform {
         Platform{ position }
     }
 
-    pub fn ground() -> Platform {
+    fn ground() -> Platform {
         let ground_position = Point::new(0.0,WINDOW_HEIGHT - Platform::GROUND_HEIGHT);
 
         let ground_params = Rectangle {
@@ -139,7 +139,7 @@ impl Platform {
         Platform::new(ground_params)
     }
 
-    pub fn elevations() -> Vec<f32> {
+    fn elevations() -> Vec<f32> {
         let relative_window_height = WINDOW_HEIGHT - Platform::GROUND_HEIGHT;
 
         vec![
@@ -242,8 +242,8 @@ pub struct Harpoon {
 }
 
 impl Harpoon {
-    pub const HARPOON_VELOCITY: f32 = 200.0;
-    pub const HARPOON_DURATION: f32 = 2.0;
+    const HARPOON_VELOCITY: f32 = 200.0;
+    const HARPOON_DURATION: f32 = 2.0;
 
     pub fn new(position: Rectangle<f32>, state: HarpoonState) -> Harpoon {
         Harpoon { position ,state, timer: 0.0 }

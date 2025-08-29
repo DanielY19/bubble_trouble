@@ -43,7 +43,7 @@ impl GameState{
             let bubbles = vec![bubble];
 
             let player_start_position = Rectangle{
-                x:WINDOW_WIDTH / 2.0 - assets.player_sprite_slices.idle.width as f32,
+                x:WINDOW_WIDTH / 2.0 - assets.player_sprite_slices.idle.width as f32 / 2.0,
                 y:ground_y_pos - assets.player_sprite_slices.idle.height as f32,
                 width:assets.player_sprite_slices.idle.width as f32,
                 height:assets.player_sprite_slices.idle.height as f32,
@@ -109,7 +109,7 @@ impl<'a> Game for GameState {
         if is_debug_active(){
             for shape in &shapes {
                 let mut mesh=  Mesh::new();
-                mesh.stroke(Shape::Rectangle(*shape),Assets::BLACK, 2.0);
+                mesh.stroke(Shape::Rectangle(*shape),Assets::BLACK, Assets::MESH_STROKE_WIDTH);
                 mesh.draw(&mut frame.as_target());
             }    
         }
@@ -122,22 +122,22 @@ impl<'a> Game for GameState {
     fn interact(&mut self, _input: &mut Self::Input, _window: &mut Window) {
         if _input.is_key_pressed(KeyCode::W) {
             self.player.handle_input(Action::Up);
-            self.player.motion = self.assets.player_sprite_slices.idle;
+            self.player.motion = self.assets.player_sprite_slices.idle.clone();
         }
         if _input.is_key_pressed(KeyCode::A) {
             self.player.handle_input(Action::Left);
             self.player.animate(GameState::SECONDS_FOR_FRAME, 
-                self.assets.player_sprite_slices.left,
-                self.assets.player_sprite_slices.left_step);
+                &self.assets.player_sprite_slices.left,
+                &self.assets.player_sprite_slices.left_step);
         }
         if _input.is_key_pressed(KeyCode::D) {
             self.player.handle_input(Action::Right);
             self.player.animate(GameState::SECONDS_FOR_FRAME, 
-                self.assets.player_sprite_slices.right,
-                self.assets.player_sprite_slices.right_step);
+                &self.assets.player_sprite_slices.right,
+                &self.assets.player_sprite_slices.right_step);
         }
         if _input.is_key_pressed(KeyCode::Space) {
-            self.player.motion = self.assets.player_sprite_slices.idle;
+            self.player.motion = self.assets.player_sprite_slices.idle.clone();
             if self.player.on_ground {
                 self.harpoon.fire(&self.player.position);
             }
@@ -146,7 +146,7 @@ impl<'a> Game for GameState {
         || _input.was_key_released(KeyCode::A)
         || _input.was_key_released(KeyCode::D)  {
             self.player.handle_input(Action::Idle);
-            self.player.motion = self.assets.player_sprite_slices.idle;
+            self.player.motion = self.assets.player_sprite_slices.idle.clone();
         }
     }
 }
