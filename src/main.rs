@@ -39,7 +39,7 @@ impl GameState{
             let platforms = Platform::generate_platforms(&mut parameter_generator);
             let ground_y_pos = platforms.first().unwrap().position.y;
 
-            let bubble = Bubble::new(Rectangle { x: 500.0, y: 300.0, width: 50.0, height: 50.0 },(150.0,75.0));
+            let bubble = Bubble::new(Rectangle { x: 500.0, y: 300.0, width: 50.0, height: 50.0 },25.0,(150.0,75.0));
             let bubbles = vec![bubble];
 
             let player_start_position = Rectangle{

@@ -24,8 +24,8 @@ impl CollisionSystem{
                                - lhs.y.max(rhs.y);
 
             match overlap_width < overlap_height {
-                true    => if lhs.x < rhs.x { Collision::Left } else { Collision::Right }
-                false   => if lhs.y < rhs.y { Collision::Top } else { Collision::Bottom }
+                true    => if lhs.x < rhs.x { Collision::Left } else { Collision::Right },
+                false   => if lhs.y < rhs.y { Collision::Top } else { Collision::Bottom },
             }
         } else {
             Collision::None
@@ -61,10 +61,10 @@ impl CollisionSystem{
         bubbles.iter_mut().for_each(|bubble| {
             platforms.iter().enumerate().for_each(|(i,platform)| {
                 match CollisionSystem::check_collision(&bubble.position, &platform.position) {
-                    Collision::Left | Collision::Right => {bubble.bounce_off_wall();}
+                    Collision::Left | Collision::Right => bubble.bounce_off_wall(),
                     Collision::Top | Collision::Bottom => 
                     if i == 0 {bubble.bounce_off_ground();} 
-                    else {bubble.bounce_off_ceiling();}
+                    else {bubble.bounce_off_ceiling();},
                     _ => ()
                 }
             }); 

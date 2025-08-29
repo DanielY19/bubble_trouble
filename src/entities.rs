@@ -182,8 +182,9 @@ impl Bubble{
     const BUBBLE_GRAVITY:f32 = 100.0;
     const BUBBLE_RADIUS_MINIMUM:f32 = 25.0;
 
-    pub fn new(position: Rectangle<f32>, velocity: (f32,f32)) -> Bubble {
-        let radius = position.width / 2.0;
+    pub fn new(mut position: Rectangle<f32>, radius: f32 ,velocity: (f32,f32)) -> Bubble {
+        position.width = radius * 2.0;
+        position.height = radius * 2.0;
         Bubble{ position, radius, velocity }
     }
 
@@ -195,14 +196,12 @@ impl Bubble{
     }
 
     pub fn pop(&self) -> Option<Vec<Bubble>> {
-        let mut position = self.position;
-        position.width /= 2.0;
-        position.height /= 2.0;
+        let position = self.position.clone();
 
-        (position.width >= Bubble::BUBBLE_RADIUS_MINIMUM).then(|| {
+        (self.radius >= Bubble::BUBBLE_RADIUS_MINIMUM).then(|| {
             vec![
-            Bubble::new(position,(self.velocity.0,self.velocity.1)),
-            Bubble::new(position,(-self.velocity.0,self.velocity.1)),
+            Bubble::new(position,self.radius / 2.0,(self.velocity.0,self.velocity.1)),
+            Bubble::new(position,self.radius / 2.0,(-self.velocity.0,self.velocity.1)),
             ]
         })
     }
