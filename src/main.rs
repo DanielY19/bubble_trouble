@@ -58,7 +58,7 @@ impl GameState{
 
             let harpoon = Harpoon::new(harpoon_start_position, HarpoonState::Inactive);
 
-            let mut player = Player::new(player_start_position,&assets);
+            let mut player = Player::new(player_start_position,&assets.player_sprite_slices.idle);
             player.handle_input(Action::Idle);
 
             GameState { assets, player, harpoon ,platforms,bubbles, parameter_generator }

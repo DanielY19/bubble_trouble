@@ -22,12 +22,12 @@ impl Player {
     const JUMP: f32 = 550.0;
     const PLAYER_MOTION_SWAP_DURATION: f32 = 0.25;
 
-    pub fn new(position: Rectangle<f32>, assets: &Assets) -> Player {
+    pub fn new(position: Rectangle<f32>, idle_motion: &Rectangle<u16>) -> Player {
         Player {
             position,
             velocity: (0.0,0.0),
             on_ground: true,
-            motion:assets.player_sprite_slices.idle,
+            motion: idle_motion.clone(),
             motion_timer:0.0,
         }
     }
