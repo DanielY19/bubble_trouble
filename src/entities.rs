@@ -251,7 +251,7 @@ impl Harpoon {
 
     pub fn fire(&mut self, position: &Rectangle<f32>) {
         if let HarpoonState::Inactive = self.state {
-            self.position.x = position.center().x - self.position.width;
+            self.position.x = position.center().x - self.position.width / 2.0;
             self.position.y = position.y + position.height;
             self.state = HarpoonState::Active;
         }
@@ -280,6 +280,9 @@ impl Harpoon {
             else {
                 self.timer += seconds;
             }
+        }
+        else {
+            self.position.height = 0.0;
         }
     }
 
